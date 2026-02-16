@@ -75,17 +75,6 @@
             text-stroke: 2px white;
         }
 
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-        }
-
         .subtitle {
             text-align: center;
             color: #ffffff;
@@ -148,6 +137,10 @@
             transition: all 0.3s ease;
         }
 
+        .standings-table tbody tr:nth-child(4) td {
+            border-bottom: 3px solid #1a3d5c;
+        }
+
         .standings-table td:first-child {
             text-align: center;
             font-weight: 700;
@@ -186,7 +179,7 @@
             text-align: center;
             font-weight: 700;
             font-size: 1.2rem;
-            color: var(--accent-tertiary);
+            color: #1a3d5c;
         }
 
         .round-score {
@@ -494,6 +487,129 @@
             font-weight: 700;
         }
 
+        /* Language toggle */
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #c8e870;
+            background: radial-gradient(circle at 30% 30%, #d4f083, #c8e870 40%, #b3d75f);
+            color: #1a3329;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(200, 232, 112, 0.6), inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+            border: 3px solid white;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .language-toggle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid white;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            transform: rotate(-25deg);
+        }
+
+        .language-toggle:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 6px 30px rgba(200, 232, 112, 0.8), inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Collapsible instructions */
+        .instructions {
+            background: var(--bg-card);
+            border-radius: 16px;
+            margin-bottom: 3rem;
+            border-left: 6px solid var(--accent-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .instructions-header {
+            padding: 1.5rem 2.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .instructions-header:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .instructions-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-secondary);
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .instructions-toggle {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+            transition: transform 0.3s ease;
+        }
+
+        .instructions-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .instructions-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            padding: 0 2.5rem;
+        }
+
+        .instructions-content.open {
+            max-height: 500px;
+            padding: 0 2.5rem 2rem 2.5rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            color: var(--text-secondary);
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .instructions li::before {
+            content: '🎾';
+            position: absolute;
+            left: 0;
+            font-size: 0.9rem;
+        }
+
+        input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.5rem;
@@ -510,6 +626,14 @@
             .standings-table th,
             .standings-table td {
                 padding: 0.5rem;
+            }
+
+            .language-toggle {
+                top: 10px;
+                right: 10px;
+                width: 70px;
+                height: 70px;
+                font-size: 0.65rem;
             }
         }
 
@@ -531,24 +655,34 @@
 </head>
 <body>
     <div class="container">
-        <h1><span class="gih">GIH</span> OPEN</h1>
-        <p class="subtitle">The Swedish School of Sport and Health Sciences annual Tennis tournament</p>
+        <!-- Language toggle -->
+        <button class="language-toggle" onclick="toggleLanguage()">
+            <span id="languageText">Svenska</span>
+        </button>
+
+        <h1>🏆 <span class="gih">GIH</span> <span id="openText">OPEN</span></h1>
+        <p class="subtitle" id="subtitle">The Swedish School of Sport and Health Sciences annual Tennis tournament</p>
 
         <div class="instructions">
-            <h3>How to Use</h3>
-            <ul>
-                <li>Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)</li>
-                <li>Enter match scores (0-6 points per player) in each round</li>
-                <li>Standings update automatically as you enter scores</li>
-                <li>Click "Generate Round X" to create pairings based on current standings</li>
-                <li>Swiss system pairs players with similar points (avoiding repeat matchups)</li>
-                <li>After 5 rounds, the top 4 players advance to the semifinals</li>
-                <li>Winners of semifinals meet in the final to crown the champion!</li>
-            </ul>
+            <div class="instructions-header" onclick="toggleInstructions()">
+                <h3 id="instructionsTitle">How to Use</h3>
+                <span class="instructions-toggle" id="instructionsToggle">▼</span>
+            </div>
+            <div class="instructions-content" id="instructionsContent">
+                <ul id="instructionsList">
+                    <li>Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)</li>
+                    <li>Enter match scores (0-6 points per player) in each round</li>
+                    <li>Standings update automatically as you enter scores</li>
+                    <li>Click "Generate Round X" to create pairings based on current standings</li>
+                    <li>Swiss system pairs players with similar points (avoiding repeat matchups)</li>
+                    <li>After 5 rounds, the top 4 players advance to the semifinals</li>
+                    <li>Winners of semifinals meet in the final to crown the champion!</li>
+                </ul>
+            </div>
         </div>
 
         <div class="standings">
-            <h2>Standings</h2>
+            <h2>Standings 🎾</h2>
             <table class="standings-table">
                 <thead>
                     <tr>
@@ -572,6 +706,108 @@
     </div>
 
     <script>
+        // Language system
+        let currentLanguage = 'en';
+
+        const translations = {
+            en: {
+                openText: 'OPEN',
+                subtitle: 'The Swedish School of Sport and Health Sciences unofficial annual Tennis tournament',
+                instructionsTitle: 'How to Use',
+                instructions: [
+                    'Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)',
+                    'Enter match scores (0-6 points per player) in each round',
+                    'Standings update automatically as you enter scores',
+                    'Click "Generate Round X" to create pairings based on current standings',
+                    'Swiss system pairs players with similar points (avoiding repeat matchups)',
+                    'After 5 rounds, the top 4 players advance to the semifinals',
+                    'Winners of semifinals meet in the final to crown the champion!'
+                ],
+                standings: 'Standings 🎾',
+                rank: 'Rank',
+                player: 'Player',
+                total: 'Total',
+                match: 'Match',
+                vs: 'VS',
+                round: 'Round',
+                generateRound: 'Generate Round',
+                playoffs: '🏆 Playoffs',
+                playoffsComplete: 'Round 5 is complete! The top 4 players advance to the semifinals.',
+                generateSemifinals: 'Generate Semifinals',
+                semifinals: '🏆 Semifinals',
+                semifinal: 'Semifinal',
+                final: '🏆 Final',
+                championshipMatch: 'Championship Match',
+                champion: '🏆 Champion 🏆',
+                languageText: 'Svenska'
+            },
+            sv: {
+                openText: 'OPEN',
+                subtitle: 'Gymnastik- och idrottshögskolans inofficiella årliga tennisturnering',
+                instructionsTitle: 'Så här använder du',
+                instructions: [
+                    'Omgång 1 parningar är automatiskt inställda (1 mot 2, 3 mot 4, etc.)',
+                    'Ange matchresultat (0-6 poäng per spelare) i varje omgång',
+                    'Ställningen uppdateras automatiskt när du anger resultat',
+                    'Klicka på "Generera omgång X" för att skapa parningar baserat på aktuell ställning',
+                    'Schweizersystemet parar spelare med liknande poäng (undviker upprepade matcher)',
+                    'Efter 5 omgångar går de 4 bästa spelarna vidare till semifinaler',
+                    'Vinnarna av semifinalerna möts i finalen för att kröna mästaren!'
+                ],
+                standings: 'Ställning 🎾',
+                rank: 'Rank',
+                player: 'Spelare',
+                total: 'Totalt',
+                match: 'Match',
+                vs: 'VS',
+                round: 'Omgång',
+                generateRound: 'Generera omgång',
+                playoffs: '🏆 Slutspel',
+                playoffsComplete: 'Omgång 5 är klar! De 4 bästa spelarna går vidare till semifinaler.',
+                generateSemifinals: 'Generera semifinaler',
+                semifinals: '🏆 Semifinaler',
+                semifinal: 'Semifinal',
+                final: '🏆 Final',
+                championshipMatch: 'Mästerskapsmatch',
+                champion: '🏆 Mästare 🏆',
+                languageText: 'English'
+            }
+        };
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'sv' : 'en';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const t = translations[currentLanguage];
+            
+            // Update static text
+            document.getElementById('openText').textContent = t.openText;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('instructionsTitle').textContent = t.instructionsTitle;
+            document.getElementById('languageText').textContent = t.languageText;
+            
+            // Update instructions list
+            const instructionsList = document.getElementById('instructionsList');
+            instructionsList.innerHTML = t.instructions.map(item => 
+                `<li>${item}</li>`
+            ).join('');
+            
+            // Re-render dynamic content
+            updateStandings();
+            renderRounds();
+            renderPlayoffs();
+        }
+
+        function toggleInstructions() {
+            const content = document.getElementById('instructionsContent');
+            const toggle = document.getElementById('instructionsToggle');
+            
+            content.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
         // Tournament state
         const state = {
             players: Array.from({ length: 20 }, (_, i) => ({
@@ -615,7 +851,19 @@
 
         // Update standings table
         function updateStandings() {
+            const t = translations[currentLanguage];
             const tbody = document.getElementById('standings-body');
+            
+            // Update standings header
+            document.querySelector('.standings h2').textContent = t.standings;
+            
+            // Update table headers
+            const headers = document.querySelectorAll('.standings-table th');
+            if (headers.length > 0) {
+                headers[0].textContent = t.rank;
+                headers[1].textContent = t.player;
+                headers[2].textContent = t.total;
+            }
             
             // Sort players by total points
             const sortedPlayers = state.players
@@ -737,6 +985,7 @@
 
         // Render all rounds
         function renderRounds() {
+            const t = translations[currentLanguage];
             const container = document.getElementById('rounds-container');
             container.innerHTML = '';
 
@@ -749,17 +998,17 @@
 
                 roundDiv.innerHTML = `
                     <div class="round-header">
-                        <h3>Round ${roundIdx + 1}</h3>
+                        <h3>${t.round} ${roundIdx + 1}</h3>
                         ${canGenerate ? `
                             <button class="generate-btn" onclick="generateRound(${roundIdx})">
-                                Generate Round ${roundIdx + 1}
+                                ${t.generateRound} ${roundIdx + 1}
                             </button>
                         ` : ''}
                     </div>
                     <div class="matches-grid">
                         ${round.matches.map((match, matchIdx) => `
                             <div class="match">
-                                <div class="match-number">Match ${matchIdx + 1}</div>
+                                <div class="match-number">${t.match} ${matchIdx + 1}</div>
                                 <div class="match-players">
                                     <div class="player-slot">
                                         <div class="match-player-name">${state.players[match.player1].name}</div>
@@ -768,7 +1017,7 @@
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 1, this.value)"
                                                onblur="validateScore(this)">
                                     </div>
-                                    <div class="vs-divider">VS</div>
+                                    <div class="vs-divider">${t.vs}</div>
                                     <div class="player-slot right">
                                         <div class="match-player-name">${state.players[match.player2].name}</div>
                                         <input type="number" class="score-input" 
@@ -785,11 +1034,6 @@
                 container.appendChild(roundDiv);
             });
         }
-
-        // Initialize
-        initializeRound1();
-        updateStandings();
-        renderRounds();
 
         // Check if round 5 is complete
         function isRound5Complete() {
@@ -890,6 +1134,7 @@
 
         // Render playoffs section
         function renderPlayoffs() {
+            const t = translations[currentLanguage];
             const container = document.getElementById('playoffs-container');
             
             // Only show playoffs if round 5 is complete
@@ -902,13 +1147,13 @@
             if (state.playoffs.semifinals[0].player1 === null) {
                 container.innerHTML = `
                     <div class="playoff-section fade-in">
-                        <h2>🏆 Playoffs</h2>
+                        <h2>${t.playoffs}</h2>
                         <p style="text-align: center; color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 2rem;">
-                            Round 5 is complete! The top 4 players advance to the semifinals.
+                            ${t.playoffsComplete}
                         </p>
                         <div style="text-align: center;">
                             <button class="generate-btn" onclick="generatePlayoffs()">
-                                Generate Semifinals
+                                ${t.generateSemifinals}
                             </button>
                         </div>
                     </div>
@@ -919,7 +1164,7 @@
             // Render semifinals
             let html = `
                 <div class="playoff-section fade-in">
-                    <h2>🏆 Semifinals</h2>
+                    <h2>${t.semifinals}</h2>
                     <div class="playoff-bracket">
             `;
 
@@ -927,7 +1172,7 @@
                 const isComplete = match.winner !== null;
                 html += `
                     <div class="playoff-match">
-                        <h4>Semifinal ${idx + 1}</h4>
+                        <h4>${t.semifinal} ${idx + 1}</h4>
                         <div class="playoff-player ${isComplete && match.winner === match.player1 ? 'winner' : ''}">
                             ${state.players[match.player1].name}
                             <input type="number" class="score-input" style="margin-top: 0.5rem;"
@@ -935,7 +1180,7 @@
                                    onchange="updateSemifinalScore(${idx}, 1, this.value)"
                                    ${isComplete ? 'disabled' : ''}>
                         </div>
-                        <div style="padding: 0.5rem; font-weight: 700; color: var(--accent-primary);">VS</div>
+                        <div style="padding: 0.5rem; font-weight: 700; color: var(--accent-primary);">${t.vs}</div>
                         <div class="playoff-player ${isComplete && match.winner === match.player2 ? 'winner' : ''}">
                             ${state.players[match.player2].name}
                             <input type="number" class="score-input" style="margin-top: 0.5rem;"
@@ -959,9 +1204,9 @@
 
                 html += `
                     <div class="playoff-section fade-in">
-                        <h2>🏆 Final</h2>
+                        <h2>${t.final}</h2>
                         <div class="playoff-match final-match">
-                            <h4>Championship Match</h4>
+                            <h4>${t.championshipMatch}</h4>
                             <div class="playoff-player ${isComplete && finalMatch.winner === finalMatch.player1 ? 'winner' : ''}">
                                 ${state.players[finalMatch.player1].name}
                                 <input type="number" class="score-input" style="margin-top: 0.5rem;"
@@ -969,7 +1214,7 @@
                                        onchange="updateFinalScore(1, this.value)"
                                        ${isComplete ? 'disabled' : ''}>
                             </div>
-                            <div style="padding: 0.5rem; font-weight: 700; color: var(--accent-primary);">VS</div>
+                            <div style="padding: 0.5rem; font-weight: 700; color: var(--accent-primary);">${t.vs}</div>
                             <div class="playoff-player ${isComplete && finalMatch.winner === finalMatch.player2 ? 'winner' : ''}">
                                 ${state.players[finalMatch.player2].name}
                                 <input type="number" class="score-input" style="margin-top: 0.5rem;"
@@ -984,7 +1229,7 @@
                 if (finalMatch.winner !== null) {
                     html += `
                         <div class="champion">
-                            <h3>🏆 Champion 🏆</h3>
+                            <h3>${t.champion}</h3>
                             <div class="player-name">${state.players[finalMatch.winner].name}</div>
                         </div>
                     `;
@@ -995,6 +1240,11 @@
 
             container.innerHTML = html;
         }
+
+        // Initialize
+        initializeRound1();
+        updateStandings();
+        renderRounds();
     </script>
 </body>
 </html>
