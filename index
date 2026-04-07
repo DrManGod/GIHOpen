@@ -957,7 +957,7 @@
         // After deploying your Google Apps Script, paste your URL here
         // It should look like: https://script.google.com/macros/s/AKfycb.../exec
         
-        const GOOGLE_SHEET_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxijh0iLuj8VIXvTioH9XYdKCuaopjcN0lQDRugdrkZWfc6OZ15DbJwoe7_avhU3MJS/exec';
         
         // ============================================
         
