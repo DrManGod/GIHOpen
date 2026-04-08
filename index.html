@@ -709,45 +709,162 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
             .header-content {
                 flex-direction: column;
                 gap: 1rem;
             }
 
             .logo {
-                width: 150px;
+                width: 120px;
             }
 
             h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 0.75rem;
+                margin-bottom: 2rem;
             }
 
             .matches-grid {
                 grid-template-columns: 1fr;
             }
 
+            .standings {
+                padding: 1.5rem;
+                overflow-x: auto;
+            }
+
+            .standings h2 {
+                font-size: 2rem;
+            }
+
             .standings-table {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+                min-width: 600px;
             }
 
             .standings-table th,
             .standings-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .standings-table input[type="text"] {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+
+            .round-section {
+                padding: 1.5rem;
+            }
+
+            .round-header h3 {
+                font-size: 1.8rem;
+            }
+
+            .week-info {
+                font-size: 0.75rem;
+                display: block;
+                margin-top: 0.25rem;
+                margin-left: 0;
+            }
+
+            .generate-btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .match {
+                padding: 1.25rem;
+            }
+
+            .match-number {
+                font-size: 0.9rem;
+            }
+
+            .match-player-name {
+                font-size: 0.95rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .score-input {
+                width: 100%;
+                max-width: 80px;
+                height: 48px;
+                font-size: 1.1rem;
+                padding: 0.5rem;
+            }
+
+            .vs-divider {
+                font-size: 1rem;
                 padding: 0.5rem;
             }
 
             .language-toggle {
                 top: 10px;
                 right: 10px;
-                width: 70px;
-                height: 70px;
-                font-size: 0.65rem;
+                width: 60px;
+                height: 60px;
+                font-size: 0.6rem;
             }
 
             .sync-status {
                 top: 10px;
                 left: 10px;
-                padding: 0.4rem 0.8rem;
-                font-size: 0.7rem;
+                padding: 0.4rem 0.7rem;
+                font-size: 0.65rem;
+            }
+
+            .instructions {
+                margin-bottom: 2rem;
+            }
+
+            .instructions-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .instructions-header h3 {
+                font-size: 1.5rem;
+            }
+
+            .instructions-content.open {
+                padding: 0 1.5rem 1.5rem 1.5rem;
+            }
+
+            .playoff-section h2 {
+                font-size: 2rem;
+            }
+
+            .playoff-match {
+                padding: 1.25rem;
+            }
+
+            .playoff-match h4 {
+                font-size: 1rem;
+            }
+
+            .playoff-player {
+                font-size: 1rem;
+                padding: 1rem;
+            }
+
+            .champion {
+                padding: 1.5rem;
+            }
+
+            .champion h3 {
+                font-size: 2.5rem;
+            }
+
+            .champion .player-name {
+                font-size: 1.8rem;
             }
 
             .reset-section {
@@ -756,8 +873,13 @@
             }
 
             .reset-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.7rem;
+                padding: 0.75rem 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            .footer {
+                font-size: 0.75rem;
+                padding: 1.5rem 1rem;
             }
         }
 
@@ -775,6 +897,29 @@
                 transform: translateY(0);
             }
         }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--accent-tertiary);
+        }
     </style>
 </head>
 <body>
@@ -790,7 +935,7 @@
         </button>
 
         <header class="header-content">
-            <img src="data:image/png;base64,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" alt="GIH Open 2026 Logo" class="logo">
+            <img src="bild-removebg-preview.png" alt="GIH Open 2026 Logo" class="logo">
             <div class="title-wrapper">
                 <h1>🏆 <span class="gih">GIH</span> <span id="openText">OPEN</span> <span class="title-year">2026</span></h1>
                 <p class="subtitle" id="subtitle">The Swedish School of Sport and Health Sciences unofficial annual Tennis tournament</p>
@@ -841,6 +986,11 @@
         <!-- Reset button at bottom -->
         <div class="reset-section">
             <button class="reset-btn" onclick="resetTournament()"><span id="resetText">Reset Tournament</span></button>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            This site is designed and hosted by Manne Godhe
         </div>
     </div>
 
@@ -1386,6 +1536,7 @@
                                         <div class="match-player-name">${state.players[match.player1].name}</div>
                                         <input type="number" class="score-input" 
                                                min="0" max="6" value="${match.score1}"
+                                               inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 1, this.value)"
                                                onblur="validateScore(this)">
                                     </div>
@@ -1394,6 +1545,7 @@
                                         <div class="match-player-name">${state.players[match.player2].name}</div>
                                         <input type="number" class="score-input" 
                                                min="0" max="6" value="${match.score2}"
+                                               inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 2, this.value)"
                                                onblur="validateScore(this)">
                                     </div>
@@ -1552,6 +1704,7 @@
                             ${state.players[match.player1].name}
                             <input type="number" class="score-input" style="margin-top: 0.5rem;"
                                    min="0" max="6" value="${match.score1}"
+                                   inputmode="numeric" pattern="[0-6]"
                                    onchange="updateSemifinalScore(${idx}, 1, this.value)"
                                    ${isComplete ? 'disabled' : ''}>
                         </div>
@@ -1560,6 +1713,7 @@
                             ${state.players[match.player2].name}
                             <input type="number" class="score-input" style="margin-top: 0.5rem;"
                                    min="0" max="6" value="${match.score2}"
+                                   inputmode="numeric" pattern="[0-6]"
                                    onchange="updateSemifinalScore(${idx}, 2, this.value)"
                                    ${isComplete ? 'disabled' : ''}>
                         </div>
@@ -1586,6 +1740,7 @@
                                 ${state.players[finalMatch.player1].name}
                                 <input type="number" class="score-input" style="margin-top: 0.5rem;"
                                        min="0" max="6" value="${finalMatch.score1}"
+                                       inputmode="numeric" pattern="[0-6]"
                                        onchange="updateFinalScore(1, this.value)"
                                        ${isComplete ? 'disabled' : ''}>
                             </div>
@@ -1594,6 +1749,7 @@
                                 ${state.players[finalMatch.player2].name}
                                 <input type="number" class="score-input" style="margin-top: 0.5rem;"
                                        min="0" max="6" value="${finalMatch.score2}"
+                                       inputmode="numeric" pattern="[0-6]"
                                        onchange="updateFinalScore(2, this.value)"
                                        ${isComplete ? 'disabled' : ''}>
                             </div>
