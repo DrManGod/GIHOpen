@@ -990,7 +990,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            This site is designed and hosted by Manne Godhe
+            Host och design av GiH Open planeringsgrupp
         </div>
     </div>
 
@@ -1029,7 +1029,9 @@
                 championshipMatch: 'Championship Match',
                 champion: '🏆 Champion 🏆',
                 languageText: 'Svenska',
-                resetText: 'Reset Tournament'
+                resetText: 'Reset Tournament',
+                confirmGenerate: 'Are you sure you want to generate the next round?',
+                confirmGenerateSubtext: 'Check that all matches are filled in correctly before continuing.'
             },
             sv: {
                 openText: 'OPEN',
@@ -1061,7 +1063,9 @@
                 championshipMatch: 'Mästerskapsmatch',
                 champion: '🏆 Mästare 🏆',
                 languageText: 'English',
-                resetText: 'Återställ turnering'
+                resetText: 'Återställ turnering',
+                confirmGenerate: 'Är du säker på att du vill generera nästa omgång?',
+                confirmGenerateSubtext: 'Kontrollera så att alla matcher är ifyllda korrekt innan du går vidare.'
             }
         };
 
@@ -1439,6 +1443,15 @@
 
         // Generate next round pairings (Swiss system)
         function generateRound(roundIdx) {
+            // Confirmation dialog
+            const t = translations[currentLanguage];
+            const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
+            const confirmSubtext = t.confirmGenerateSubtext || 'Check that all matches are filled in correctly before continuing.';
+            
+            if (!confirm(confirmMessage + '\n\n' + confirmSubtext)) {
+                return; // User cancelled
+            }
+            
             // Get players sorted by points
             const playerIndices = state.players
                 .map((p, idx) => ({ idx, points: getTotalPoints(idx) }))
@@ -1572,6 +1585,15 @@
 
         // Generate playoffs from top 4 players
         function generatePlayoffs() {
+            // Confirmation dialog
+            const t = translations[currentLanguage];
+            const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
+            const confirmSubtext = t.confirmGenerateSubtext || 'Check that all matches are filled in correctly before continuing.';
+            
+            if (!confirm(confirmMessage + '\n\n' + confirmSubtext)) {
+                return; // User cancelled
+            }
+            
             // Get top 4 players by total points
             const sortedPlayers = state.players
                 .map((p, idx) => ({ idx, points: getTotalPoints(idx), name: p.name }))
