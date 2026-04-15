@@ -1006,7 +1006,6 @@
                         <th>R2</th>
                         <th>R3</th>
                         <th>R4</th>
-                        <th>R5</th>
                     </tr>
                 </thead>
                 <tbody id="standings-body"></tbody>
@@ -1273,9 +1272,12 @@
                     
                     // Validate: Check if loaded state has correct number of players (18)
                     if (loadedState.players && loadedState.players.length === 18) {
-                        state.players = loadedState.players;
-                        state.rounds = loadedState.rounds || state.rounds;
-                        state.playoffs = loadedState.playoffs || state.playoffs;
+                        // Sanitize the loaded state to ensure only valid rounds exist
+                        const sanitizedState = sanitizeLoadedState(loadedState);
+                        
+                        state.players = sanitizedState.players;
+                        state.rounds = sanitizedState.rounds || state.rounds;
+                        state.playoffs = sanitizedState.playoffs || state.playoffs;
                         
                         // Also update localStorage
                         localStorage.setItem('gih_tournament_state', JSON.stringify(state));
@@ -1299,6 +1301,59 @@
             return false;
         }
 
+        // Sanitize loaded state to ensure only valid rounds remain
+        function sanitizeLoadedState(loadedState) {
+            // Ensure all players have exactly 4 scores (not 5 from old data)
+            loadedState.players.forEach(player => {
+                if (player.scores.length > 4) {
+                    console.log(`Trimming player ${player.name} scores from ${player.scores.length} to 4`);
+                    player.scores = player.scores.slice(0, 4);
+                }
+                // If less than 4, pad with zeros
+                while (player.scores.length < 4) {
+                    player.scores.push(0);
+                }
+            });
+            
+            // Ensure all matches have the 'completed' field
+            loadedState.rounds.forEach(round => {
+                round.matches.forEach(match => {
+                    if (match.completed === undefined) {
+                        match.completed = false;
+                    }
+                });
+            });
+            
+            // Clear rounds that shouldn't exist yet based on previous round completion
+            for (let i = 1; i < loadedState.rounds.length; i++) {
+                const previousRoundComplete = loadedState.rounds[i - 1].matches.length > 0 && 
+                                             loadedState.rounds[i - 1].matches.every(m => m.completed === true);
+                
+                // If previous round is not complete, clear this round
+                if (!previousRoundComplete && loadedState.rounds[i].matches.length > 0) {
+                    console.log(`Clearing Round ${i + 1} - previous round not complete`);
+                    loadedState.rounds[i].matches = [];
+                }
+            }
+            
+            // Clear playoffs if Round 4 is not complete
+            const round4Complete = loadedState.rounds[3].matches.length > 0 && 
+                                  loadedState.rounds[3].matches.every(m => m.completed === true);
+            
+            if (!round4Complete && loadedState.playoffs) {
+                console.log('Clearing playoffs - Round 4 not complete');
+                loadedState.playoffs = {
+                    semifinals: [
+                        { player1: null, player2: null, score1: 0, score2: 0, winner: null },
+                        { player1: null, player2: null, score1: 0, score2: 0, winner: null }
+                    ],
+                    final: { player1: null, player2: null, score1: 0, score2: 0, winner: null }
+                };
+            }
+            
+            return loadedState;
+        }
+
         // Load from localStorage (fallback)
         function loadFromLocalStorage() {
             try {
@@ -1308,9 +1363,12 @@
                     
                     // Validate: Check if loaded state has correct number of players (18)
                     if (loadedState.players && loadedState.players.length === 18) {
-                        state.players = loadedState.players;
-                        state.rounds = loadedState.rounds || state.rounds;
-                        state.playoffs = loadedState.playoffs || state.playoffs;
+                        // Sanitize the loaded state to ensure only valid rounds exist
+                        const sanitizedState = sanitizeLoadedState(loadedState);
+                        
+                        state.players = sanitizedState.players;
+                        state.rounds = sanitizedState.rounds || state.rounds;
+                        state.playoffs = sanitizedState.playoffs || state.playoffs;
                         return true;
                     } else {
                         // Old data with wrong number of players - clear it
