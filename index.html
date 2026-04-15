@@ -952,9 +952,9 @@
                     <li>Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)</li>
                     <li>Enter match scores (0-6 points per player) in each round</li>
                     <li>Standings update automatically as you enter scores</li>
-                    <li>Click "Generate Round X" to create pairings based on current standings (after all matches in a round are completed)</li>
+                    <li>Click "Generate Round X" to create pairings based on current standings</li>
                     <li>Swiss system pairs players with similar points (avoiding repeat matchups)</li>
-                    <li>After 5 rounds, the top 4 players advance to the semifinals</li>
+                    <li>After 4 rounds, the top 4 players advance to the semifinals</li>
                     <li>Winners of semifinals meet in the final to crown the champion!</li>
                 </ul>
             </div>
@@ -1009,7 +1009,7 @@
                     'Standings update automatically as you enter scores',
                     'Click "Generate Round X" to create pairings based on current standings',
                     'Swiss system pairs players with similar points (avoiding repeat matchups)',
-                    'After 5 rounds, the top 4 players advance to the semifinals',
+                    'After 4 rounds, the top 4 players advance to the semifinals',
                     'Winners of semifinals meet in the final to crown the champion!'
                 ],
                 standings: 'Standings 🎾',
@@ -1021,7 +1021,7 @@
                 round: 'Round',
                 generateRound: 'Generate Round',
                 playoffs: '🏆 Playoffs',
-                playoffsComplete: 'Round 5 is complete! The top 4 players advance to the semifinals.',
+                playoffsComplete: 'Round 4 is complete! The top 4 players advance to the semifinals.',
                 generateSemifinals: 'Generate Semifinals',
                 semifinals: '🏆 Semifinals',
                 semifinal: 'Semifinal',
@@ -1041,7 +1041,7 @@
                     'Ställningen uppdateras automatiskt när du anger resultat',
                     'Klicka på "Generera omgång X" för att skapa parningar baserat på aktuell ställning',
                     'Schweizersystemet parar spelare med liknande poäng (undviker upprepade matcher)',
-                    'Efter 5 omgångar går de 4 bästa spelarna vidare till semifinaler',
+                    'Efter 4 omgångar går de 4 bästa spelarna vidare till semifinaler',
                     'Vinnarna av semifinalerna möts i finalen för att kröna mästaren!'
                 ],
                 standings: 'Ställning 🎾',
@@ -1053,7 +1053,7 @@
                 round: 'Omgång',
                 generateRound: 'Generera omgång',
                 playoffs: '🏆 Slutspel',
-                playoffsComplete: 'Omgång 5 är klar! De 4 bästa spelarna går vidare till semifinaler.',
+                playoffsComplete: 'Omgång 4 är klar! De 4 bästa spelarna går vidare till semifinaler.',
                 generateSemifinals: 'Generera semifinaler',
                 semifinals: '🏆 Semifinaler',
                 semifinal: 'Semifinal',
@@ -1117,26 +1117,26 @@
         // Tournament state
         const state = {
             players: [
-                { id: 1, name: 'Anna Tengblad', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 2, name: 'Stefan Höög', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 3, name: 'Abram Katz', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 4, name: 'Oscar Horwath', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 5, name: 'Linnea Eriksson', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 6, name: 'Simon Östh', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 7, name: 'Christopher Engdahl', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 8, name: 'Michaela Sundqvist', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 9, name: 'Ine Pedersen (KTH masterstudent)', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 10, name: 'Björn Särnbrink', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 11, name: 'Maria Grante', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 12, name: 'Saga Samuelsson', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 13, name: 'Cecilia Stålman', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 14, name: 'Sara Hoy', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 15, name: 'Frida Lidén', scores: [0, 0, 0, 0, 0], opponents: [] },
-                { id: 16, name: 'Manne Godhe', scores: [0, 0, 0, 0, 0], opponents: [] }
-             
+                { id: 1, name: 'Anna Tengblad', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 2, name: 'Stefan Höög', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 3, name: 'Abram Katz', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 4, name: 'Björn Särnbrink', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 5, name: 'Linnea Eriksson', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 6, name: 'Simon Östh', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 7, name: 'Ine Pedersen (KTH masterstudent)', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 8, name: 'Christopher Engdahl', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 9, name: 'Oscar Horwath', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 10, name: 'Michaela Sundqvist', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 11, name: 'Saga Samuelsson', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 12, name: 'Maria Grante', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 13, name: 'Sara Hoy', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 14, name: 'Frida Lidén', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 15, name: 'Cecilia Stålman', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 16, name: 'Mikaela Urbom', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 17, name: 'Manne Godhe', scores: [0, 0, 0, 0], opponents: [] },
+                { id: 18, name: 'Karin Redelius', scores: [0, 0, 0, 0], opponents: [] }
             ],
             rounds: [
-                { matches: [] },
                 { matches: [] },
                 { matches: [] },
                 { matches: [] },
@@ -1227,8 +1227,8 @@
                 if (result.success && result.data) {
                     const loadedState = result.data;
                     
-                    // Validate: Check if loaded state has correct number of players (16)
-                    if (loadedState.players && loadedState.players.length === 16) {
+                    // Validate: Check if loaded state has correct number of players (18)
+                    if (loadedState.players && loadedState.players.length === 18) {
                         state.players = loadedState.players;
                         state.rounds = loadedState.rounds || state.rounds;
                         state.playoffs = loadedState.playoffs || state.playoffs;
@@ -1262,8 +1262,8 @@
                 if (saved) {
                     const loadedState = JSON.parse(saved);
                     
-                    // Validate: Check if loaded state has correct number of players (16)
-                    if (loadedState.players && loadedState.players.length === 16) {
+                    // Validate: Check if loaded state has correct number of players (18)
+                    if (loadedState.players && loadedState.players.length === 18) {
                         state.players = loadedState.players;
                         state.rounds = loadedState.rounds || state.rounds;
                         state.playoffs = loadedState.playoffs || state.playoffs;
@@ -1346,7 +1346,7 @@
 
         // Initialize Round 1 pairings
         function initializeRound1() {
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 9; i++) {
                 state.rounds[0].matches.push({
                     player1: i * 2,
                     player2: i * 2 + 1,
@@ -1432,7 +1432,7 @@
             updateStandings();
             
             // Check if round 5 is complete to trigger playoffs
-            if (roundIdx === 4 && isRound5Complete()) {
+            if (roundIdx === 3 && isRound4Complete()) {
                 renderPlayoffs();
             }
         }
@@ -1505,7 +1505,7 @@
             container.innerHTML = '';
 
             // Week numbers for each round (v.17, v.18, etc.)
-            const weekNumbers = ['v.17', 'v.18', 'v.19', 'v.20', 'v.21'];
+            const weekNumbers = ['v.17', 'v.18', 'v.19', 'v.20'];
             const weekText = {
                 en: 'to be completed',
                 sv: 'att genomföras'
@@ -1561,11 +1561,11 @@
         }
 
         // Check if round 5 is complete
-        function isRound5Complete() {
-            const round5 = state.rounds[4];
-            if (round5.matches.length === 0) return false;
+        function isRound4Complete() {
+            const round4 = state.rounds[3];
+            if (round4.matches.length === 0) return false;
             
-            return round5.matches.every(match => 
+            return round4.matches.every(match => 
                 match.score1 > 0 || match.score2 > 0
             );
         }
@@ -1665,8 +1665,8 @@
             const t = translations[currentLanguage];
             const container = document.getElementById('playoffs-container');
             
-            // Only show playoffs if round 5 is complete
-            if (!isRound5Complete()) {
+            // Only show playoffs if round 4 is complete
+            if (!isRound4Complete()) {
                 container.innerHTML = '';
                 return;
             }
