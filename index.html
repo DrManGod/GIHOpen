@@ -385,6 +385,40 @@
             font-style: italic;
         }
 
+        .match-completed {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .match-completed label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .match-completed label:hover {
+            color: var(--accent-primary);
+        }
+
+        .match-completed input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent-primary);
+        }
+
+        .match-completed input[type="checkbox"]:checked + span {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
         .instructions {
             background: var(--bg-card);
             border-radius: 16px;
@@ -1031,7 +1065,10 @@
                 languageText: 'Svenska',
                 resetText: 'Reset Tournament',
                 confirmGenerate: 'Are you sure you want to generate the next round?',
-                confirmGenerateSubtext: 'Check that all matches are filled in correctly before continuing.'
+                confirmGenerateSubtext: 'Make sure all matches in the current round are filled in correctly before continuing.',
+                matchCompleted: 'Match completed',
+                previousRoundIncomplete: 'Previous round must be completed first!',
+                previousRoundIncompleteSubtext: 'Please mark all matches as completed in the previous round before generating the next one.'
             },
             sv: {
                 openText: 'OPEN',
@@ -1065,7 +1102,10 @@
                 languageText: 'English',
                 resetText: 'Återställ turnering',
                 confirmGenerate: 'Är du säker på att du vill generera nästa omgång?',
-                confirmGenerateSubtext: 'Kontrollera så att alla matcher är ifyllda korrekt innan du går vidare.'
+                confirmGenerateSubtext: 'Kontrollera så att alla matcher i nuvarande omgång är ifyllda korrekt innan du går vidare.',
+                matchCompleted: 'Match färdigrapporterad',
+                previousRoundIncomplete: 'Föregående omgång måste vara färdig först!',
+                previousRoundIncompleteSubtext: 'Vänligen markera alla matcher som färdigrapporterade i föregående omgång innan du genererar nästa.'
             }
         };
 
@@ -1355,7 +1395,8 @@
                     player1: i * 2,
                     player2: i * 2 + 1,
                     score1: 0,
-                    score2: 0
+                    score2: 0,
+                    completed: false
                 });
             }
         }
@@ -1406,6 +1447,13 @@
             renderRounds();
         }
 
+        // Toggle match completed status
+        function toggleMatchCompleted(roundIdx, matchIdx, isCompleted) {
+            state.rounds[roundIdx].matches[matchIdx].completed = isCompleted;
+            saveState();
+            renderRounds(); // Re-render to show/hide next round's generate button
+        }
+
         // Validate score input (0-6)
         function validateScore(input) {
             const value = parseInt(input.value);
@@ -1443,6 +1491,15 @@
 
         // Generate next round pairings (Swiss system)
         function generateRound(roundIdx) {
+            // Validate that previous round is complete
+            if (roundIdx > 0 && !isRoundComplete(roundIdx - 1)) {
+                const t = translations[currentLanguage];
+                const errorMessage = t.previousRoundIncomplete || 'Previous round must be completed first!';
+                const errorSubtext = t.previousRoundIncompleteSubtext || 'Please mark all matches as completed in the previous round before generating the next one.';
+                alert(errorMessage + '\n\n' + errorSubtext);
+                return;
+            }
+            
             // Confirmation dialog
             const t = translations[currentLanguage];
             const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
@@ -1494,7 +1551,8 @@
                         player1: player1,
                         player2: opponent,
                         score1: 0,
-                        score2: 0
+                        score2: 0,
+                        completed: false
                     });
 
                     // Track opponents
@@ -1525,11 +1583,20 @@
             };
 
             state.rounds.forEach((round, roundIdx) => {
+                // Determine if this round should be visible
+                const isRound1 = roundIdx === 0;
+                const previousRoundComplete = roundIdx === 0 || isRoundComplete(roundIdx - 1);
+                const thisRoundHasMatches = round.matches.length > 0;
+                
+                // Show round if: it's Round 1, OR previous round is complete, OR this round already has matches
+                const shouldShowRound = isRound1 || previousRoundComplete || thisRoundHasMatches;
+                
+                if (!shouldShowRound) return; // Skip this round
+                
                 const roundDiv = document.createElement('div');
                 roundDiv.className = 'round-section fade-in';
                 
-                const isRound1 = roundIdx === 0;
-                const canGenerate = roundIdx > 0 && round.matches.length === 0;
+                const canGenerate = roundIdx > 0 && round.matches.length === 0 && previousRoundComplete;
                 const weekInfo = `(${weekText[currentLanguage]} ${weekNumbers[roundIdx]})`;
 
                 roundDiv.innerHTML = `
@@ -1564,6 +1631,14 @@
                                                onblur="validateScore(this)">
                                     </div>
                                 </div>
+                                <div class="match-completed">
+                                    <label>
+                                        <input type="checkbox" 
+                                               ${match.completed ? 'checked' : ''}
+                                               onchange="toggleMatchCompleted(${roundIdx}, ${matchIdx}, this.checked)">
+                                        <span>${t.matchCompleted || 'Match completed'}</span>
+                                    </label>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -1573,18 +1648,31 @@
             });
         }
 
-        // Check if round 5 is complete
-        function isRound4Complete() {
-            const round4 = state.rounds[3];
-            if (round4.matches.length === 0) return false;
+        // Check if a specific round is complete
+        function isRoundComplete(roundIdx) {
+            const round = state.rounds[roundIdx];
+            if (!round || round.matches.length === 0) return false;
             
-            return round4.matches.every(match => 
-                match.score1 > 0 || match.score2 > 0
-            );
+            // Check if all matches are marked as completed
+            return round.matches.every(match => match.completed === true);
+        }
+
+        // Check if round 4 is complete
+        function isRound4Complete() {
+            return isRoundComplete(3);
         }
 
         // Generate playoffs from top 4 players
         function generatePlayoffs() {
+            // Validate that Round 4 is complete
+            if (!isRound4Complete()) {
+                const t = translations[currentLanguage];
+                const errorMessage = t.previousRoundIncomplete || 'Previous round must be completed first!';
+                const errorSubtext = t.previousRoundIncompleteSubtext || 'Please mark all matches as completed in the previous round before generating the next one.';
+                alert(errorMessage + '\n\n' + errorSubtext);
+                return;
+            }
+            
             // Confirmation dialog
             const t = translations[currentLanguage];
             const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
