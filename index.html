@@ -1120,7 +1120,8 @@
                 unlockRound: 'Unlock Round',
                 unlockPrompt: 'Enter unlock code:',
                 unlockSuccess: 'Round unlocked successfully!',
-                unlockFailed: 'Incorrect code!'
+                unlockFailed: 'Incorrect code!',
+                resetPrompt: 'Enter code to reset tournament:'
             },
             sv: {
                 openText: 'OPEN',
@@ -1161,7 +1162,8 @@
                 unlockRound: 'Lås upp omgång',
                 unlockPrompt: 'Ange upplåsningskod:',
                 unlockSuccess: 'Omgång upplåst!',
-                unlockFailed: 'Fel kod!'
+                unlockFailed: 'Fel kod!',
+                resetPrompt: 'Ange kod för att återställa turneringen:'
             }
         };
 
@@ -1498,6 +1500,19 @@
         // Reset tournament
         function resetTournament() {
             const t = translations[currentLanguage];
+            
+            // First, require unlock code
+            const code = prompt(t.resetPrompt || 'Enter code to reset tournament:');
+            
+            if (code !== '1813') {
+                if (code !== null) {
+                    // User entered wrong code (null means cancelled)
+                    alert(t.unlockFailed || 'Incorrect code!');
+                }
+                return; // Exit if wrong code or cancelled
+            }
+            
+            // Code is correct, now confirm the reset
             const confirmMsg = currentLanguage === 'en' 
                 ? 'Are you sure you want to reset the entire tournament? This will delete all player names, scores, and matches. This cannot be undone!'
                 : 'Är du säker på att du vill återställa hela turneringen? Detta raderar alla spelarnamn, resultat och matcher. Detta kan inte ångras!';
