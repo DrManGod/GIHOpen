@@ -294,6 +294,47 @@
             cursor: not-allowed;
         }
 
+        .unlock-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
+            margin-left: 1rem;
+        }
+
+        .unlock-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(231, 76, 60, 0.6);
+        }
+
+        .match.locked {
+            opacity: 0.7;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.05), rgba(192, 57, 43, 0.05));
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        .match.locked::before {
+            content: '🔒';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .match {
+            position: relative;
+        }
+
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -815,6 +856,14 @@
                 margin-top: 1rem;
             }
 
+            .unlock-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+                width: 100%;
+                margin-top: 0.5rem;
+                margin-left: 0;
+            }
+
             .match {
                 padding: 1.25rem;
             }
@@ -1067,7 +1116,11 @@
                 confirmGenerateSubtext: 'Make sure all matches in the current round are filled in correctly before continuing.',
                 matchCompleted: 'Match completed',
                 previousRoundIncomplete: 'Previous round must be completed first!',
-                previousRoundIncompleteSubtext: 'Please mark all matches as completed in the previous round before generating the next one.'
+                previousRoundIncompleteSubtext: 'Please mark all matches as completed in the previous round before generating the next one.',
+                unlockRound: 'Unlock Round',
+                unlockPrompt: 'Enter unlock code:',
+                unlockSuccess: 'Round unlocked successfully!',
+                unlockFailed: 'Incorrect code!'
             },
             sv: {
                 openText: 'OPEN',
@@ -1104,7 +1157,11 @@
                 confirmGenerateSubtext: 'Kontrollera så att alla matcher i nuvarande omgång är ifyllda korrekt innan du går vidare.',
                 matchCompleted: 'Match färdigrapporterad',
                 previousRoundIncomplete: 'Föregående omgång måste vara färdig först!',
-                previousRoundIncompleteSubtext: 'Vänligen markera alla matcher som färdigrapporterade i föregående omgång innan du genererar nästa.'
+                previousRoundIncompleteSubtext: 'Vänligen markera alla matcher som färdigrapporterade i föregående omgång innan du genererar nästa.',
+                unlockRound: 'Lås upp omgång',
+                unlockPrompt: 'Ange upplåsningskod:',
+                unlockSuccess: 'Omgång upplåst!',
+                unlockFailed: 'Fel kod!'
             }
         };
 
@@ -1180,10 +1237,10 @@
                 { id: 18, name: 'Karin Redelius', scores: [0, 0, 0, 0], opponents: [] }
             ],
             rounds: [
-                { matches: [] },
-                { matches: [] },
-                { matches: [] },
-                { matches: [] }
+                { matches: [], locked: false },
+                { matches: [], locked: false },
+                { matches: [], locked: false },
+                { matches: [], locked: false }
             ],
             playoffs: {
                 semifinals: [
@@ -1315,8 +1372,13 @@
                 }
             });
             
-            // Ensure all matches have the 'completed' field
+            // Ensure all rounds have the 'locked' field
             loadedState.rounds.forEach(round => {
+                if (round.locked === undefined) {
+                    round.locked = false;
+                }
+                
+                // Ensure all matches have the 'completed' field
                 round.matches.forEach(match => {
                     if (match.completed === undefined) {
                         match.completed = false;
@@ -1512,6 +1574,22 @@
             renderRounds(); // Re-render to show/hide next round's generate button
         }
 
+        // Unlock round with code
+        function unlockRound(roundIdx) {
+            const t = translations[currentLanguage];
+            const code = prompt(t.unlockPrompt || 'Enter unlock code:');
+            
+            if (code === '1813') {
+                state.rounds[roundIdx].locked = false;
+                saveState();
+                renderRounds();
+                alert(t.unlockSuccess || 'Round unlocked successfully!');
+            } else if (code !== null) {
+                // User entered wrong code (null means cancelled)
+                alert(t.unlockFailed || 'Incorrect code!');
+            }
+        }
+
         // Validate score input (0-6)
         function validateScore(input) {
             const value = parseInt(input.value);
@@ -1623,6 +1701,13 @@
             }
 
             state.rounds[roundIdx].matches = matches;
+            
+            // Lock previous round when generating new one
+            if (roundIdx > 0) {
+                state.rounds[roundIdx - 1].locked = true;
+                console.log(`Round ${roundIdx} locked`);
+            }
+            
             saveState();
             renderRounds();
         }
@@ -1656,10 +1741,16 @@
                 
                 const canGenerate = roundIdx > 0 && round.matches.length === 0 && previousRoundComplete;
                 const weekInfo = `(${weekText[currentLanguage]} ${weekNumbers[roundIdx]})`;
+                const isLocked = round.locked || false;
 
                 roundDiv.innerHTML = `
                     <div class="round-header">
                         <h3>${t.round} ${roundIdx + 1} <span class="week-info">${weekInfo}</span></h3>
+                        ${isLocked ? `
+                            <button class="unlock-btn" onclick="unlockRound(${roundIdx})">
+                                🔒 ${t.unlockRound || 'Unlock Round'}
+                            </button>
+                        ` : ''}
                         ${canGenerate ? `
                             <button class="generate-btn" onclick="generateRound(${roundIdx})">
                                 ${t.generateRound} ${roundIdx + 1}
@@ -1668,7 +1759,7 @@
                     </div>
                     <div class="matches-grid">
                         ${round.matches.map((match, matchIdx) => `
-                            <div class="match">
+                            <div class="match ${isLocked ? 'locked' : ''}">
                                 <div class="match-number">${t.match} ${matchIdx + 1}</div>
                                 <div class="match-players">
                                     <div class="player-slot">
@@ -1677,7 +1768,8 @@
                                                min="0" max="6" value="${match.score1}"
                                                inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 1, this.value)"
-                                               onblur="validateScore(this)">
+                                               onblur="validateScore(this)"
+                                               ${isLocked ? 'disabled' : ''}>
                                     </div>
                                     <div class="vs-divider">${t.vs}</div>
                                     <div class="player-slot right">
@@ -1686,14 +1778,16 @@
                                                min="0" max="6" value="${match.score2}"
                                                inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 2, this.value)"
-                                               onblur="validateScore(this)">
+                                               onblur="validateScore(this)"
+                                               ${isLocked ? 'disabled' : ''}>
                                     </div>
                                 </div>
                                 <div class="match-completed">
                                     <label>
                                         <input type="checkbox" 
                                                ${match.completed ? 'checked' : ''}
-                                               onchange="toggleMatchCompleted(${roundIdx}, ${matchIdx}, this.checked)">
+                                               onchange="toggleMatchCompleted(${roundIdx}, ${matchIdx}, this.checked)"
+                                               ${isLocked ? 'disabled' : ''}>
                                         <span>${t.matchCompleted || 'Match completed'}</span>
                                     </label>
                                 </div>
@@ -1763,6 +1857,10 @@
                 score2: 0,
                 winner: null
             };
+
+            // Lock Round 4 when generating playoffs
+            state.rounds[3].locked = true;
+            console.log('Round 4 locked - playoffs generated');
 
             saveState();
             renderPlayoffs();
