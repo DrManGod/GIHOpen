@@ -1679,22 +1679,29 @@
                 const player1 = playerIndices[i];
                 let opponent = null;
 
-                // Find best available opponent
+                // Find best available opponent (avoiding previous opponents)
                 for (let j = i + 1; j < playerIndices.length; j++) {
                     const player2 = playerIndices[j];
                     if (paired.has(player2)) continue;
-                    if (state.players[player1].opponents.includes(player2)) continue;
+                    
+                    // Check if they've played before
+                    if (state.players[player1].opponents.includes(player2)) {
+                        console.log(`Skipping repeat: ${state.players[player1].name} vs ${state.players[player2].name}`);
+                        continue;
+                    }
 
                     opponent = player2;
                     break;
                 }
 
-                // If no unused opponent found, pair with anyone available
+                // If no unused opponent found, log warning and pair with closest available
                 if (opponent === null) {
+                    console.warn(`WARNING: No unique opponent found for ${state.players[player1].name}`);
                     for (let j = i + 1; j < playerIndices.length; j++) {
                         const player2 = playerIndices[j];
                         if (!paired.has(player2)) {
                             opponent = player2;
+                            console.warn(`Forced repeat pairing: ${state.players[player1].name} vs ${state.players[player2].name}`);
                             break;
                         }
                     }
@@ -1709,7 +1716,7 @@
                         completed: false
                     });
 
-                    // Track opponents
+                    // Track opponents to prevent future rematches
                     state.players[player1].opponents.push(opponent);
                     state.players[opponent].opponents.push(player1);
 
@@ -1736,8 +1743,8 @@
             const container = document.getElementById('rounds-container');
             container.innerHTML = '';
 
-            // Week numbers for each round (v.18, etc.)
-            const weekNumbers = ['v.18', 'v.19', 'v.20', 'v.21'];
+            // Week numbers for each round (v.17, v.18, etc.)
+            const weekNumbers = ['v.17', 'v.18', 'v.19', 'v.20'];
             const weekText = {
                 en: 'to be completed',
                 sv: 'att genomföras'
