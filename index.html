@@ -1663,45 +1663,90 @@
                 return; // User cancelled
             }
             
-            // Get players sorted by points
+            // Get players sorted by: 1) total points, 2) goal difference, 3) original seeding
             const playerIndices = state.players
-                .map((p, idx) => ({ idx, points: getTotalPoints(idx) }))
-                .sort((a, b) => b.points - a.points)
-                .map(p => p.idx);
+                .map((p, idx) => {
+                    const totalPoints = getTotalPoints(idx);
+                    // Calculate goal difference (goals scored - goals conceded)
+                    let goalsFor = 0;
+                    let goalsAgainst = 0;
+                    p.scores.forEach((score, roundIdx) => {
+                        goalsFor += score;
+                        // Find opponent's score in this round
+                        const round = state.rounds[roundIdx];
+                        if (round && round.matches) {
+                            const match = round.matches.find(m => m.player1 === idx || m.player2 === idx);
+                            if (match) {
+                                goalsAgainst += (match.player1 === idx) ? match.score2 : match.score1;
+                            }
+                        }
+                    });
+                    const goalDiff = goalsFor - goalsAgainst;
+                    
+                    return { idx, points: totalPoints, goalDiff, seeding: idx };
+                })
+                .sort((a, b) => {
+                    // Primary: Total points (descending)
+                    if (b.points !== a.points) return b.points - a.points;
+                    // Secondary: Goal difference (descending)
+                    if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+                    // Tertiary: Original seeding (ascending)
+                    return a.seeding - b.seeding;
+                });
 
             const matches = [];
             const paired = new Set();
 
             // Try to pair players with similar points, avoiding repeat matchups
             for (let i = 0; i < playerIndices.length; i++) {
-                if (paired.has(playerIndices[i])) continue;
+                if (paired.has(playerIndices[i].idx)) continue;
 
                 const player1 = playerIndices[i];
                 let opponent = null;
+                let bestOpponent = null;
+                let bestScore = Infinity;
 
-                // Find best available opponent (avoiding previous opponents)
+                // Find best available opponent
                 for (let j = i + 1; j < playerIndices.length; j++) {
                     const player2 = playerIndices[j];
-                    if (paired.has(player2)) continue;
+                    if (paired.has(player2.idx)) continue;
                     
-                    // Check if they've played before
-                    if (state.players[player1].opponents.includes(player2)) {
-                        console.log(`Skipping repeat: ${state.players[player1].name} vs ${state.players[player2].name}`);
+                    // Check if they've played before - SKIP if yes
+                    if (state.players[player1.idx].opponents.includes(player2.idx)) {
+                        console.log(`Skipping repeat: ${state.players[player1.idx].name} vs ${state.players[player2.idx].name}`);
                         continue;
                     }
 
-                    opponent = player2;
-                    break;
+                    // Calculate pairing quality score (lower is better)
+                    const pointsDiff = Math.abs(player1.points - player2.points);
+                    const goalDiffDiff = Math.abs(player1.goalDiff - player2.goalDiff);
+                    const pairingScore = pointsDiff * 100 + goalDiffDiff; // Points difference matters most
+                    
+                    if (pairingScore < bestScore) {
+                        bestScore = pairingScore;
+                        bestOpponent = player2;
+                    }
+                    
+                    // Perfect match: same points and similar goal diff
+                    if (pointsDiff === 0 && goalDiffDiff <= 3) {
+                        opponent = player2;
+                        break;
+                    }
+                }
+                
+                // Use best opponent if no perfect match found
+                if (opponent === null && bestOpponent !== null) {
+                    opponent = bestOpponent;
                 }
 
-                // If no unused opponent found, log warning and pair with closest available
+                // If no unused opponent found, log warning
                 if (opponent === null) {
-                    console.warn(`WARNING: No unique opponent found for ${state.players[player1].name}`);
+                    console.warn(`WARNING: No unique opponent found for ${state.players[player1.idx].name}`);
                     for (let j = i + 1; j < playerIndices.length; j++) {
                         const player2 = playerIndices[j];
-                        if (!paired.has(player2)) {
+                        if (!paired.has(player2.idx)) {
                             opponent = player2;
-                            console.warn(`Forced repeat pairing: ${state.players[player1].name} vs ${state.players[player2].name}`);
+                            console.warn(`Forced repeat pairing: ${state.players[player1.idx].name} vs ${state.players[player2.idx].name}`);
                             break;
                         }
                     }
@@ -1709,19 +1754,21 @@
 
                 if (opponent !== null) {
                     matches.push({
-                        player1: player1,
-                        player2: opponent,
+                        player1: player1.idx,
+                        player2: opponent.idx,
                         score1: 0,
                         score2: 0,
                         completed: false
                     });
 
                     // Track opponents to prevent future rematches
-                    state.players[player1].opponents.push(opponent);
-                    state.players[opponent].opponents.push(player1);
+                    state.players[player1.idx].opponents.push(opponent.idx);
+                    state.players[opponent.idx].opponents.push(player1.idx);
 
-                    paired.add(player1);
-                    paired.add(opponent);
+                    paired.add(player1.idx);
+                    paired.add(opponent.idx);
+                    
+                    console.log(`Paired: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff})`);
                 }
             }
 
