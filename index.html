@@ -1375,6 +1375,9 @@
                 while (player.scores.length < 4) {
                     player.scores.push(0);
                 }
+                
+                // Ensure opponents array exists (will rebuild from matches)
+                player.opponents = [];
             });
             
             // Ensure all rounds have the 'locked' field
@@ -1389,6 +1392,26 @@
                         match.completed = false;
                     }
                 });
+            });
+            
+            // REBUILD opponents list from existing matches
+            console.log('Rebuilding opponent tracking from existing matches...');
+            loadedState.rounds.forEach((round, roundIdx) => {
+                if (round.matches.length > 0) {
+                    round.matches.forEach(match => {
+                        const p1 = match.player1;
+                        const p2 = match.player2;
+                        
+                        // Add to opponents list if not already there
+                        if (!loadedState.players[p1].opponents.includes(p2)) {
+                            loadedState.players[p1].opponents.push(p2);
+                        }
+                        if (!loadedState.players[p2].opponents.includes(p1)) {
+                            loadedState.players[p2].opponents.push(p1);
+                        }
+                    });
+                    console.log(`Round ${roundIdx + 1}: Rebuilt opponent tracking for ${round.matches.length} matches`);
+                }
             });
             
             // Clear rounds that shouldn't exist yet based on previous round completion
@@ -1697,16 +1720,16 @@
             const matches = [];
             const paired = new Set();
 
-            // Try to pair players with similar points, avoiding repeat matchups
+            // Try to pair players - PRIORITY: same points first!
             for (let i = 0; i < playerIndices.length; i++) {
                 if (paired.has(playerIndices[i].idx)) continue;
 
                 const player1 = playerIndices[i];
                 let opponent = null;
-                let bestOpponent = null;
-                let bestScore = Infinity;
+                let bestSamePointsOpponent = null;
+                let bestSamePointsGD = -Infinity;
 
-                // Find best available opponent
+                // STEP 1: Try to find opponent with SAME points
                 for (let j = i + 1; j < playerIndices.length; j++) {
                     const player2 = playerIndices[j];
                     if (paired.has(player2.idx)) continue;
@@ -1717,29 +1740,57 @@
                         continue;
                     }
 
-                    // Calculate pairing quality score (lower is better)
-                    const pointsDiff = Math.abs(player1.points - player2.points);
-                    const goalDiffDiff = Math.abs(player1.goalDiff - player2.goalDiff);
-                    const pairingScore = pointsDiff * 100 + goalDiffDiff; // Points difference matters most
-                    
-                    if (pairingScore < bestScore) {
-                        bestScore = pairingScore;
-                        bestOpponent = player2;
+                    // Check if SAME points
+                    if (player1.points === player2.points) {
+                        // Among same points: prefer closest goal difference
+                        if (player2.goalDiff > bestSamePointsGD) {
+                            bestSamePointsGD = player2.goalDiff;
+                            bestSamePointsOpponent = player2;
+                        }
                     }
-                    
-                    // Perfect match: same points and similar goal diff
-                    if (pointsDiff === 0 && goalDiffDiff <= 3) {
-                        opponent = player2;
-                        break;
-                    }
-                }
-                
-                // Use best opponent if no perfect match found
-                if (opponent === null && bestOpponent !== null) {
-                    opponent = bestOpponent;
                 }
 
-                // If no unused opponent found, log warning
+                // Use best same-points opponent if found
+                if (bestSamePointsOpponent !== null) {
+                    opponent = bestSamePointsOpponent;
+                    console.log(`Same points match: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff})`);
+                }
+
+                // STEP 2: If no same-points opponent, find CLOSEST points
+                if (opponent === null) {
+                    let closestPointsDiff = Infinity;
+                    let closestOpponents = [];
+                    
+                    // First pass: find the closest point difference
+                    for (let j = i + 1; j < playerIndices.length; j++) {
+                        const player2 = playerIndices[j];
+                        if (paired.has(player2.idx)) continue;
+                        
+                        // Check if they've played before - SKIP if yes
+                        if (state.players[player1.idx].opponents.includes(player2.idx)) {
+                            continue;
+                        }
+
+                        const pointsDiff = Math.abs(player1.points - player2.points);
+                        if (pointsDiff < closestPointsDiff) {
+                            closestPointsDiff = pointsDiff;
+                            closestOpponents = [player2];
+                        } else if (pointsDiff === closestPointsDiff) {
+                            closestOpponents.push(player2);
+                        }
+                    }
+                    
+                    // Second pass: among closest points, pick best goal difference
+                    if (closestOpponents.length > 0) {
+                        opponent = closestOpponents.reduce((best, current) => {
+                            return current.goalDiff > best.goalDiff ? current : best;
+                        });
+                        
+                        console.log(`Different points match: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff}) - point diff: ${closestPointsDiff}`);
+                    }
+                }
+
+                // STEP 3: If still no opponent, allow repeat (should never happen with 18/4)
                 if (opponent === null) {
                     console.warn(`WARNING: No unique opponent found for ${state.players[player1.idx].name}`);
                     for (let j = i + 1; j < playerIndices.length; j++) {
@@ -1767,8 +1818,6 @@
 
                     paired.add(player1.idx);
                     paired.add(opponent.idx);
-                    
-                    console.log(`Paired: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff})`);
                 }
             }
 
@@ -1791,7 +1840,7 @@
             container.innerHTML = '';
 
             // Week numbers for each round (v.17, v.18, etc.)
-            const weekNumbers = ['v.18', 'v.19', 'v.20', 'v.21'];
+            const weekNumbers = ['v.17', 'v.18', 'v.19', 'v.20'];
             const weekText = {
                 en: 'to be completed',
                 sv: 'att genomföras'
