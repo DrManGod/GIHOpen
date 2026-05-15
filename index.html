@@ -294,6 +294,47 @@
             cursor: not-allowed;
         }
 
+        .unlock-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
+            margin-left: 1rem;
+        }
+
+        .unlock-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(231, 76, 60, 0.6);
+        }
+
+        .match.locked {
+            opacity: 0.7;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.05), rgba(192, 57, 43, 0.05));
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        .match.locked::before {
+            content: '🔒';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .match {
+            position: relative;
+        }
+
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -815,6 +856,14 @@
                 margin-top: 1rem;
             }
 
+            .unlock-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+                width: 100%;
+                margin-top: 0.5rem;
+                margin-left: 0;
+            }
+
             .match {
                 padding: 1.25rem;
             }
@@ -985,6 +1034,7 @@
                 <ul id="instructionsList">
                     <li>Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)</li>
                     <li>Enter match scores (0-6 points per player) in each round</li>
+                    <li>Check "Match completed" after each finished match</li>
                     <li>Standings update automatically as you enter scores</li>
                     <li>Click "Generate Round X" to create pairings based on current standings</li>
                     <li>Swiss system pairs players with similar points (avoiding repeat matchups)</li>
@@ -1006,7 +1056,6 @@
                         <th>R2</th>
                         <th>R3</th>
                         <th>R4</th>
-                        <th>R5</th>
                     </tr>
                 </thead>
                 <tbody id="standings-body"></tbody>
@@ -1040,6 +1089,7 @@
                 instructions: [
                     'Round 1 pairings are automatically set (1 vs 2, 3 vs 4, etc.)',
                     'Enter match scores (0-6 points per player) in each round',
+                    'Check "Match completed" after each finished match',
                     'Standings update automatically as you enter scores',
                     'Click "Generate Round X" to create pairings based on current standings',
                     'Swiss system pairs players with similar points (avoiding repeat matchups)',
@@ -1066,7 +1116,14 @@
                 resetText: 'Reset Tournament',
                 confirmGenerate: 'Are you sure you want to generate the next round?',
                 confirmGenerateSubtext: 'Make sure all matches in the current round are filled in correctly before continuing.',
-                matchCompleted: 'Match completed'
+                matchCompleted: 'Match completed',
+                previousRoundIncomplete: 'Previous round must be completed first!',
+                previousRoundIncompleteSubtext: 'Please mark all matches as completed in the previous round before generating the next one.',
+                unlockRound: 'Unlock Round',
+                unlockPrompt: 'Enter unlock code:',
+                unlockSuccess: 'Round unlocked successfully!',
+                unlockFailed: 'Incorrect code!',
+                resetPrompt: 'Enter code to reset tournament:'
             },
             sv: {
                 openText: 'OPEN',
@@ -1075,6 +1132,7 @@
                 instructions: [
                     'Omgång 1 parningar är automatiskt inställda (1 mot 2, 3 mot 4, etc.)',
                     'Ange matchresultat (0-6 poäng per spelare) i varje omgång',
+                    'Kryssa i "Match färdigrapporterad" efter varje spelad match',
                     'Ställningen uppdateras automatiskt när du anger resultat',
                     'Klicka på "Generera omgång X" för att skapa parningar baserat på aktuell ställning',
                     'Schweizersystemet parar spelare med liknande poäng (undviker upprepade matcher)',
@@ -1101,7 +1159,14 @@
                 resetText: 'Återställ turnering',
                 confirmGenerate: 'Är du säker på att du vill generera nästa omgång?',
                 confirmGenerateSubtext: 'Kontrollera så att alla matcher i nuvarande omgång är ifyllda korrekt innan du går vidare.',
-                matchCompleted: 'Match färdigrapporterad'
+                matchCompleted: 'Match färdigrapporterad',
+                previousRoundIncomplete: 'Föregående omgång måste vara färdig först!',
+                previousRoundIncompleteSubtext: 'Vänligen markera alla matcher som färdigrapporterade i föregående omgång innan du genererar nästa.',
+                unlockRound: 'Lås upp omgång',
+                unlockPrompt: 'Ange upplåsningskod:',
+                unlockSuccess: 'Omgång upplåst!',
+                unlockFailed: 'Fel kod!',
+                resetPrompt: 'Ange kod för att återställa turneringen:'
             }
         };
 
@@ -1177,10 +1242,10 @@
                 { id: 18, name: 'Karin Redelius', scores: [0, 0, 0, 0], opponents: [] }
             ],
             rounds: [
-                { matches: [] },
-                { matches: [] },
-                { matches: [] },
-                { matches: [] }
+                { matches: [], locked: false },
+                { matches: [], locked: false },
+                { matches: [], locked: false },
+                { matches: [], locked: false }
             ],
             playoffs: {
                 semifinals: [
@@ -1269,9 +1334,12 @@
                     
                     // Validate: Check if loaded state has correct number of players (18)
                     if (loadedState.players && loadedState.players.length === 18) {
-                        state.players = loadedState.players;
-                        state.rounds = loadedState.rounds || state.rounds;
-                        state.playoffs = loadedState.playoffs || state.playoffs;
+                        // Sanitize the loaded state to ensure only valid rounds exist
+                        const sanitizedState = sanitizeLoadedState(loadedState);
+                        
+                        state.players = sanitizedState.players;
+                        state.rounds = sanitizedState.rounds || state.rounds;
+                        state.playoffs = sanitizedState.playoffs || state.playoffs;
                         
                         // Also update localStorage
                         localStorage.setItem('gih_tournament_state', JSON.stringify(state));
@@ -1295,6 +1363,87 @@
             return false;
         }
 
+        // Sanitize loaded state to ensure only valid rounds remain
+        function sanitizeLoadedState(loadedState) {
+            // Ensure all players have exactly 4 scores (not 5 from old data)
+            loadedState.players.forEach(player => {
+                if (player.scores.length > 4) {
+                    console.log(`Trimming player ${player.name} scores from ${player.scores.length} to 4`);
+                    player.scores = player.scores.slice(0, 4);
+                }
+                // If less than 4, pad with zeros
+                while (player.scores.length < 4) {
+                    player.scores.push(0);
+                }
+                
+                // Ensure opponents array exists (will rebuild from matches)
+                player.opponents = [];
+            });
+            
+            // Ensure all rounds have the 'locked' field
+            loadedState.rounds.forEach(round => {
+                if (round.locked === undefined) {
+                    round.locked = false;
+                }
+                
+                // Ensure all matches have the 'completed' field
+                round.matches.forEach(match => {
+                    if (match.completed === undefined) {
+                        match.completed = false;
+                    }
+                });
+            });
+            
+            // REBUILD opponents list from existing matches
+            console.log('Rebuilding opponent tracking from existing matches...');
+            loadedState.rounds.forEach((round, roundIdx) => {
+                if (round.matches.length > 0) {
+                    round.matches.forEach(match => {
+                        const p1 = match.player1;
+                        const p2 = match.player2;
+                        
+                        // Add to opponents list if not already there
+                        if (!loadedState.players[p1].opponents.includes(p2)) {
+                            loadedState.players[p1].opponents.push(p2);
+                        }
+                        if (!loadedState.players[p2].opponents.includes(p1)) {
+                            loadedState.players[p2].opponents.push(p1);
+                        }
+                    });
+                    console.log(`Round ${roundIdx + 1}: Rebuilt opponent tracking for ${round.matches.length} matches`);
+                }
+            });
+            
+            // Clear rounds that shouldn't exist yet based on previous round completion
+            for (let i = 1; i < loadedState.rounds.length; i++) {
+                const previousRoundComplete = loadedState.rounds[i - 1].matches.length > 0 && 
+                                             loadedState.rounds[i - 1].matches.every(m => m.completed === true);
+                
+                // If previous round is not complete, clear this round
+                if (!previousRoundComplete && loadedState.rounds[i].matches.length > 0) {
+                    console.log(`Clearing Round ${i + 1} - previous round not complete`);
+                    loadedState.rounds[i].matches = [];
+                }
+            }
+            
+            // Clear playoffs if Round 4 is not complete
+            const round4Complete = loadedState.rounds[3].matches.length > 0 && 
+                                  loadedState.rounds[3].matches.every(m => m.completed === true);
+            
+            if (!round4Complete && loadedState.playoffs) {
+                console.log('Clearing playoffs - Round 4 not complete');
+                loadedState.playoffs = {
+                    semifinals: [
+                        { player1: null, player2: null, score1: 0, score2: 0, winner: null },
+                        { player1: null, player2: null, score1: 0, score2: 0, winner: null }
+                    ],
+                    final: { player1: null, player2: null, score1: 0, score2: 0, winner: null }
+                };
+            }
+            
+            return loadedState;
+        }
+
         // Load from localStorage (fallback)
         function loadFromLocalStorage() {
             try {
@@ -1304,9 +1453,12 @@
                     
                     // Validate: Check if loaded state has correct number of players (18)
                     if (loadedState.players && loadedState.players.length === 18) {
-                        state.players = loadedState.players;
-                        state.rounds = loadedState.rounds || state.rounds;
-                        state.playoffs = loadedState.playoffs || state.playoffs;
+                        // Sanitize the loaded state to ensure only valid rounds exist
+                        const sanitizedState = sanitizeLoadedState(loadedState);
+                        
+                        state.players = sanitizedState.players;
+                        state.rounds = sanitizedState.rounds || state.rounds;
+                        state.playoffs = sanitizedState.playoffs || state.playoffs;
                         return true;
                     } else {
                         // Old data with wrong number of players - clear it
@@ -1374,6 +1526,19 @@
         // Reset tournament
         function resetTournament() {
             const t = translations[currentLanguage];
+            
+            // First, require unlock code
+            const code = prompt(t.resetPrompt || 'Enter code to reset tournament:');
+            
+            if (code !== '1813') {
+                if (code !== null) {
+                    // User entered wrong code (null means cancelled)
+                    alert(t.unlockFailed || 'Incorrect code!');
+                }
+                return; // Exit if wrong code or cancelled
+            }
+            
+            // Code is correct, now confirm the reset
             const confirmMsg = currentLanguage === 'en' 
                 ? 'Are you sure you want to reset the entire tournament? This will delete all player names, scores, and matches. This cannot be undone!'
                 : 'Är du säker på att du vill återställa hela turneringen? Detta raderar alla spelarnamn, resultat och matcher. Detta kan inte ångras!';
@@ -1450,6 +1615,22 @@
             renderRounds(); // Re-render to show/hide next round's generate button
         }
 
+        // Unlock round with code
+        function unlockRound(roundIdx) {
+            const t = translations[currentLanguage];
+            const code = prompt(t.unlockPrompt || 'Enter unlock code:');
+            
+            if (code === '1813') {
+                state.rounds[roundIdx].locked = false;
+                saveState();
+                renderRounds();
+                alert(t.unlockSuccess || 'Round unlocked successfully!');
+            } else if (code !== null) {
+                // User entered wrong code (null means cancelled)
+                alert(t.unlockFailed || 'Incorrect code!');
+            }
+        }
+
         // Validate score input (0-6)
         function validateScore(input) {
             const value = parseInt(input.value);
@@ -1487,6 +1668,15 @@
 
         // Generate next round pairings (Swiss system)
         function generateRound(roundIdx) {
+            // Validate that previous round is complete
+            if (roundIdx > 0 && !isRoundComplete(roundIdx - 1)) {
+                const t = translations[currentLanguage];
+                const errorMessage = t.previousRoundIncomplete || 'Previous round must be completed first!';
+                const errorSubtext = t.previousRoundIncompleteSubtext || 'Please mark all matches as completed in the previous round before generating the next one.';
+                alert(errorMessage + '\n\n' + errorSubtext);
+                return;
+            }
+            
             // Confirmation dialog
             const t = translations[currentLanguage];
             const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
@@ -1496,38 +1686,118 @@
                 return; // User cancelled
             }
             
-            // Get players sorted by points
+            // Get players sorted by: 1) total points, 2) goal difference, 3) original seeding
             const playerIndices = state.players
-                .map((p, idx) => ({ idx, points: getTotalPoints(idx) }))
-                .sort((a, b) => b.points - a.points)
-                .map(p => p.idx);
+                .map((p, idx) => {
+                    const totalPoints = getTotalPoints(idx);
+                    // Calculate goal difference (goals scored - goals conceded)
+                    let goalsFor = 0;
+                    let goalsAgainst = 0;
+                    p.scores.forEach((score, roundIdx) => {
+                        goalsFor += score;
+                        // Find opponent's score in this round
+                        const round = state.rounds[roundIdx];
+                        if (round && round.matches) {
+                            const match = round.matches.find(m => m.player1 === idx || m.player2 === idx);
+                            if (match) {
+                                goalsAgainst += (match.player1 === idx) ? match.score2 : match.score1;
+                            }
+                        }
+                    });
+                    const goalDiff = goalsFor - goalsAgainst;
+                    
+                    return { idx, points: totalPoints, goalDiff, seeding: idx };
+                })
+                .sort((a, b) => {
+                    // Primary: Total points (descending)
+                    if (b.points !== a.points) return b.points - a.points;
+                    // Secondary: Goal difference (descending)
+                    if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+                    // Tertiary: Original seeding (ascending)
+                    return a.seeding - b.seeding;
+                });
 
             const matches = [];
             const paired = new Set();
 
-            // Try to pair players with similar points, avoiding repeat matchups
+            // Try to pair players - PRIORITY: same points first!
             for (let i = 0; i < playerIndices.length; i++) {
-                if (paired.has(playerIndices[i])) continue;
+                if (paired.has(playerIndices[i].idx)) continue;
 
                 const player1 = playerIndices[i];
                 let opponent = null;
+                let bestSamePointsOpponent = null;
+                let bestSamePointsGD = -Infinity;
 
-                // Find best available opponent
+                // STEP 1: Try to find opponent with SAME points
                 for (let j = i + 1; j < playerIndices.length; j++) {
                     const player2 = playerIndices[j];
-                    if (paired.has(player2)) continue;
-                    if (state.players[player1].opponents.includes(player2)) continue;
+                    if (paired.has(player2.idx)) continue;
+                    
+                    // Check if they've played before - SKIP if yes
+                    if (state.players[player1.idx].opponents.includes(player2.idx)) {
+                        console.log(`Skipping repeat: ${state.players[player1.idx].name} vs ${state.players[player2.idx].name}`);
+                        continue;
+                    }
 
-                    opponent = player2;
-                    break;
+                    // Check if SAME points
+                    if (player1.points === player2.points) {
+                        // Among same points: prefer closest goal difference
+                        if (player2.goalDiff > bestSamePointsGD) {
+                            bestSamePointsGD = player2.goalDiff;
+                            bestSamePointsOpponent = player2;
+                        }
+                    }
                 }
 
-                // If no unused opponent found, pair with anyone available
+                // Use best same-points opponent if found
+                if (bestSamePointsOpponent !== null) {
+                    opponent = bestSamePointsOpponent;
+                    console.log(`Same points match: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff})`);
+                }
+
+                // STEP 2: If no same-points opponent, find CLOSEST points
                 if (opponent === null) {
+                    let closestPointsDiff = Infinity;
+                    let closestOpponents = [];
+                    
+                    // First pass: find the closest point difference
                     for (let j = i + 1; j < playerIndices.length; j++) {
                         const player2 = playerIndices[j];
-                        if (!paired.has(player2)) {
+                        if (paired.has(player2.idx)) continue;
+                        
+                        // Check if they've played before - SKIP if yes
+                        if (state.players[player1.idx].opponents.includes(player2.idx)) {
+                            continue;
+                        }
+
+                        const pointsDiff = Math.abs(player1.points - player2.points);
+                        if (pointsDiff < closestPointsDiff) {
+                            closestPointsDiff = pointsDiff;
+                            closestOpponents = [player2];
+                        } else if (pointsDiff === closestPointsDiff) {
+                            closestOpponents.push(player2);
+                        }
+                    }
+                    
+                    // Second pass: among closest points, pick best goal difference
+                    if (closestOpponents.length > 0) {
+                        opponent = closestOpponents.reduce((best, current) => {
+                            return current.goalDiff > best.goalDiff ? current : best;
+                        });
+                        
+                        console.log(`Different points match: ${state.players[player1.idx].name} (${player1.points}pts, GD:${player1.goalDiff}) vs ${state.players[opponent.idx].name} (${opponent.points}pts, GD:${opponent.goalDiff}) - point diff: ${closestPointsDiff}`);
+                    }
+                }
+
+                // STEP 3: If still no opponent, allow repeat (should never happen with 18/4)
+                if (opponent === null) {
+                    console.warn(`WARNING: No unique opponent found for ${state.players[player1.idx].name}`);
+                    for (let j = i + 1; j < playerIndices.length; j++) {
+                        const player2 = playerIndices[j];
+                        if (!paired.has(player2.idx)) {
                             opponent = player2;
+                            console.warn(`Forced repeat pairing: ${state.players[player1.idx].name} vs ${state.players[player2.idx].name}`);
                             break;
                         }
                     }
@@ -1535,23 +1805,30 @@
 
                 if (opponent !== null) {
                     matches.push({
-                        player1: player1,
-                        player2: opponent,
+                        player1: player1.idx,
+                        player2: opponent.idx,
                         score1: 0,
                         score2: 0,
                         completed: false
                     });
 
-                    // Track opponents
-                    state.players[player1].opponents.push(opponent);
-                    state.players[opponent].opponents.push(player1);
+                    // Track opponents to prevent future rematches
+                    state.players[player1.idx].opponents.push(opponent.idx);
+                    state.players[opponent.idx].opponents.push(player1.idx);
 
-                    paired.add(player1);
-                    paired.add(opponent);
+                    paired.add(player1.idx);
+                    paired.add(opponent.idx);
                 }
             }
 
             state.rounds[roundIdx].matches = matches;
+            
+            // Lock previous round when generating new one
+            if (roundIdx > 0) {
+                state.rounds[roundIdx - 1].locked = true;
+                console.log(`Round ${roundIdx} locked`);
+            }
+            
             saveState();
             renderRounds();
         }
@@ -1585,10 +1862,16 @@
                 
                 const canGenerate = roundIdx > 0 && round.matches.length === 0 && previousRoundComplete;
                 const weekInfo = `(${weekText[currentLanguage]} ${weekNumbers[roundIdx]})`;
+                const isLocked = round.locked || false;
 
                 roundDiv.innerHTML = `
                     <div class="round-header">
                         <h3>${t.round} ${roundIdx + 1} <span class="week-info">${weekInfo}</span></h3>
+                        ${isLocked ? `
+                            <button class="unlock-btn" onclick="unlockRound(${roundIdx})">
+                                🔒 ${t.unlockRound || 'Unlock Round'}
+                            </button>
+                        ` : ''}
                         ${canGenerate ? `
                             <button class="generate-btn" onclick="generateRound(${roundIdx})">
                                 ${t.generateRound} ${roundIdx + 1}
@@ -1597,7 +1880,7 @@
                     </div>
                     <div class="matches-grid">
                         ${round.matches.map((match, matchIdx) => `
-                            <div class="match">
+                            <div class="match ${isLocked ? 'locked' : ''}">
                                 <div class="match-number">${t.match} ${matchIdx + 1}</div>
                                 <div class="match-players">
                                     <div class="player-slot">
@@ -1606,7 +1889,8 @@
                                                min="0" max="6" value="${match.score1}"
                                                inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 1, this.value)"
-                                               onblur="validateScore(this)">
+                                               onblur="validateScore(this)"
+                                               ${isLocked ? 'disabled' : ''}>
                                     </div>
                                     <div class="vs-divider">${t.vs}</div>
                                     <div class="player-slot right">
@@ -1615,14 +1899,16 @@
                                                min="0" max="6" value="${match.score2}"
                                                inputmode="numeric" pattern="[0-6]"
                                                onchange="updateScore(${roundIdx}, ${matchIdx}, 2, this.value)"
-                                               onblur="validateScore(this)">
+                                               onblur="validateScore(this)"
+                                               ${isLocked ? 'disabled' : ''}>
                                     </div>
                                 </div>
                                 <div class="match-completed">
                                     <label>
                                         <input type="checkbox" 
                                                ${match.completed ? 'checked' : ''}
-                                               onchange="toggleMatchCompleted(${roundIdx}, ${matchIdx}, this.checked)">
+                                               onchange="toggleMatchCompleted(${roundIdx}, ${matchIdx}, this.checked)"
+                                               ${isLocked ? 'disabled' : ''}>
                                         <span>${t.matchCompleted || 'Match completed'}</span>
                                     </label>
                                 </div>
@@ -1651,6 +1937,15 @@
 
         // Generate playoffs from top 4 players
         function generatePlayoffs() {
+            // Validate that Round 4 is complete
+            if (!isRound4Complete()) {
+                const t = translations[currentLanguage];
+                const errorMessage = t.previousRoundIncomplete || 'Previous round must be completed first!';
+                const errorSubtext = t.previousRoundIncompleteSubtext || 'Please mark all matches as completed in the previous round before generating the next one.';
+                alert(errorMessage + '\n\n' + errorSubtext);
+                return;
+            }
+            
             // Confirmation dialog
             const t = translations[currentLanguage];
             const confirmMessage = t.confirmGenerate || 'Are you sure you want to generate the next round?';
@@ -1683,6 +1978,10 @@
                 score2: 0,
                 winner: null
             };
+
+            // Lock Round 4 when generating playoffs
+            state.rounds[3].locked = true;
+            console.log('Round 4 locked - playoffs generated');
 
             saveState();
             renderPlayoffs();
