@@ -247,6 +247,23 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .round-header.collapsible {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, rgba(13, 59, 46, 0.05), rgba(212, 175, 55, 0.05));
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-primary);
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        .round-header.collapsible:hover {
+            background: linear-gradient(135deg, rgba(13, 59, 46, 0.1), rgba(212, 175, 55, 0.1));
+            transform: translateX(2px);
         }
 
         .round-header h3 {
@@ -256,6 +273,49 @@
             color: var(--accent-secondary);
             letter-spacing: 1px;
             text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .round-header.collapsible h3 {
+            font-size: 1.5rem;
+        }
+
+        .collapse-arrow {
+            display: inline-block;
+            font-size: 1rem;
+            color: var(--accent-primary);
+            transition: transform 0.3s ease;
+            min-width: 1.2rem;
+        }
+
+        .locked-badge {
+            font-size: 1.2rem;
+            margin-left: 0.5rem;
+        }
+
+        .round-header-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .matches-grid {
+            max-height: 10000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.3s ease, margin 0.3s ease;
+            opacity: 1;
+            margin-top: 2rem;
+        }
+
+        .matches-grid.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
         .week-info {
@@ -808,6 +868,19 @@
 
             .matches-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .round-header.collapsible h3 {
+                font-size: 1.1rem;
+            }
+
+            .round-header h3 {
+                font-size: 1.5rem;
+            }
+
+            .round-header-buttons {
+                width: 100%;
+                justify-content: flex-end;
             }
 
             .standings {
@@ -1840,7 +1913,7 @@
             container.innerHTML = '';
 
             // Week numbers for each round (v.17, v.18, etc.)
-            const weekNumbers = ['v.17', 'v.20', 'v.21', 'v.22'];
+            const weekNumbers = ['v.18', 'v.20', 'v.21/22', 'v.23'];
             const weekText = {
                 en: 'to be completed',
                 sv: 'att genomföras'
@@ -1865,20 +1938,27 @@
                 const isLocked = round.locked || false;
 
                 roundDiv.innerHTML = `
-                    <div class="round-header">
-                        <h3>${t.round} ${roundIdx + 1} <span class="week-info">${weekInfo}</span></h3>
-                        ${isLocked ? `
-                            <button class="unlock-btn" onclick="unlockRound(${roundIdx})">
-                                🔒 ${t.unlockRound || 'Unlock Round'}
-                            </button>
-                        ` : ''}
-                        ${canGenerate ? `
-                            <button class="generate-btn" onclick="generateRound(${roundIdx})">
-                                ${t.generateRound} ${roundIdx + 1}
-                            </button>
-                        ` : ''}
+                    <div class="round-header ${isLocked ? 'collapsible' : ''}" ${isLocked ? `onclick="toggleRoundCollapse(${roundIdx})"` : ''}>
+                        <h3>
+                            ${isLocked ? `<span class="collapse-arrow" id="arrow-${roundIdx}">▶</span>` : ''}
+                            ${t.round} ${roundIdx + 1} 
+                            <span class="week-info">${weekInfo}</span>
+                            ${isLocked ? `<span class="locked-badge">🔒</span>` : ''}
+                        </h3>
+                        <div class="round-header-buttons" ${isLocked ? 'onclick="event.stopPropagation()"' : ''}>
+                            ${isLocked ? `
+                                <button class="unlock-btn" onclick="unlockRound(${roundIdx})">
+                                    🔒 ${t.unlockRound || 'Unlock Round'}
+                                </button>
+                            ` : ''}
+                            ${canGenerate ? `
+                                <button class="generate-btn" onclick="generateRound(${roundIdx})">
+                                    ${t.generateRound} ${roundIdx + 1}
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
-                    <div class="matches-grid">
+                    <div class="matches-grid ${isLocked ? 'collapsed' : ''}" id="matches-${roundIdx}">
                         ${round.matches.map((match, matchIdx) => `
                             <div class="match ${isLocked ? 'locked' : ''}">
                                 <div class="match-number">${t.match} ${matchIdx + 1}</div>
@@ -1919,6 +1999,20 @@
 
                 container.appendChild(roundDiv);
             });
+        }
+
+        // Toggle collapse/expand for locked rounds
+        function toggleRoundCollapse(roundIdx) {
+            const matchesGrid = document.getElementById(`matches-${roundIdx}`);
+            const arrow = document.getElementById(`arrow-${roundIdx}`);
+            
+            if (matchesGrid.classList.contains('collapsed')) {
+                matchesGrid.classList.remove('collapsed');
+                if (arrow) arrow.textContent = '▼';
+            } else {
+                matchesGrid.classList.add('collapsed');
+                if (arrow) arrow.textContent = '▶';
+            }
         }
 
         // Check if a specific round is complete
